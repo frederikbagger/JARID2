@@ -391,7 +391,8 @@ if __name__ == "__main__":
 		for i,classe in enumerate(all_classes):
 			a=plt.plot(numpy.array(fc)[all_classes[classe]],numpy.array(fc2)[all_classes[classe]],'o',alpha=.5, color=colors[i], marker=markers[i], label=classe)
 			plots.append(a)
-		plots.append( plt.plot(line_x, line_x*lin_fit[0] + lin_fit[1] , '--b', label='$R^2$ = %.2f'%(corr_coef*corr_coef) )) #we append the plot of the line here
+		if not log2gene1 and not log2gene2:
+			plots.append( plt.plot(line_x, line_x*lin_fit[0] + lin_fit[1] , '--b', label='$R^2$ = %.2f'%(corr_coef*corr_coef) )) #we append the plot of the line here
 		kwarg={'size':6 }
 		
 		plt.legend(loc='upper right', prop=kwarg)
