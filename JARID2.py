@@ -629,10 +629,10 @@ if __name__ == "__main__":
 		Each dot in the plot represent a microarray experiment with different
 		cell types, as specified in the legend of the plot. The foldchange for '''+in_gene+''' is given on the x-axis and foldchange for '''+in_gene2+''' is given on the y-axis. The stippled line represent a theoretical perfect correlation and the R<sup>2</sub> value for the correlation is given in the legend.<br>'''
 		
-	cor_loglog=''' x- and y-axis are in log2 scale.'''
-	cor_lg1='''x-axis is in log2 scale'''
-	cor_lg2='''y-axis is in log2 scale'''
-	single_log='''Expression is given on y-axis on a log2 scale'''
+	cor_loglog=''' x- and y-axis are in log2 scale.<br>'''
+	cor_lg1='''x-axis is in log2 scale<br>'''
+	cor_lg2='''y-axis is in log2 scale<br>'''
+	single_log='''Expression is given on y-axis on a log2 scale<br>'''
 	
 	
 	
@@ -640,39 +640,26 @@ if __name__ == "__main__":
 	if WEB_opt: # some display
 		if in_gene is not None:
 			print head
+			
+			#print plot
 			if not fold_change:
 				print '<img src=\"%s.png\" align=center>' % in_gene
-				# for human there are three choices : ['leukemia','normal','both'], if the fc flag is activated, then only leukemia are plotted.
-				if in_gene2 is None:
-					print singletxt
-				else:
-					print cortxt
-				
-				if organism == 'mouse':
-					print MouseNormabr
-				elif data_to_use == 'leukemia' :
-					print AMLabr
-				elif data_to_use == 'normal' :
-					print Normabr
-				else:
-					print AMLandNormabr 
-				print '<br><a target=\"_blank\" href=\"%s.pdf\" title=\"\">Get plot in pdf format</a>' % in_gene
-				
 			else:
 				print '<img src=\"%s_fc.png\" align=center>' % in_gene
+				
+			#print "what is on plot"
+			if fold_change:
+				if in_gene2 is None:
+					print singletxt_fc
+				else:
+					print cortxt_fc
+			else: 
 				if in_gene2 is None:
 					print singletxt
 				else:
 					print cortxt
-				if data_to_use == 'leukemia' :
-					print AMLabr
-				elif data_to_use == 'normal' :
-					print Normabr
-				else:
-					print AMLandNormabr 
-				print '<a target=\"_blank\" href=\"%s_fc.pdf\" title=\"\">Get plot in pdf format</a>' % in_gene
-			
-			#please note that we have at least one log axis - in case you haven't notest from the plot...
+
+			#print info on log2 axis - in case user haven't noted from the plot...
 			if in_gene2 is not None:#correlations
 				if log2gene2 and log2gene1: 
 					print cor_loglog
@@ -682,13 +669,28 @@ if __name__ == "__main__":
 					print cor_lg2
 			elif in_gene2 is None: #singles
 				if log2gene1:
-					print single_log
-					
+					print single_log				
 				
+			#print abbreviations table
+ 			if organism == 'mouse':
+ 				print MouseNormabr
+ 			elif data_to_use == 'leukemia' :
+ 				print AMLabr
+ 			elif data_to_use == 'normal' :
+ 				print Normabr
+ 			else:
+ 				print AMLandNormabr 
+
+
+			if not fold_change:
+				print '<br><a target=\"_blank\" href=\"%s.pdf\" title=\"\">Get plot in pdf format</a>' % in_gene		
+			else:
+				print '<a target=\"_blank\" href=\"%s_fc.pdf\" title=\"\">Get plot in pdf format</a>' % in_gene
 				
 		else:
 			print "Please provide a gene!"
 			sys.exit(2)
+	
 	else:
 		if in_gene is not None:
 			print 'gene is #%s#' % in_gene
