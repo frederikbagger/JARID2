@@ -614,25 +614,26 @@ if __name__ == "__main__":
 
 
 	singletxt='''	<b>Single gene lookup</b><br>
-		Each dot in the plot corresponds the expression of '''+in_gene+''' in a microarray. Horizontal lines represent the median expression for each class of cells.'''
+		Each dot in the plot corresponds the expression of '''+in_gene+''' in a microarray. Horizontal lines represent the median expression for each class of cells. '''
 	
 	singletxt_fc='''	<b>Single gene lookup</b><br>
-	Each dot in the plot corresponds the foldchange of '''+in_gene+''' in a microarray. Horizontal lines represent the median expression for each class of cells.'''
+	Each dot in the plot corresponds the foldchange of '''+in_gene+''' in a microarray. Horizontal lines represent the median expression for each class of cells. '''
 
 	if in_gene2 is not None:
 		cortxt='''<b>Correlation</b><br>
 		Each dot in the plot represent a microarray experiment with different
 		cell types, as specified in the legend of the plot. Expression for gene '''+in_gene+''' is given on the x-axis and expression for 
-		'''+in_gene2+''' is given on the y-axis. The stippled line represent a theoretical perfect correlation and the R<sup>2</sub> value for the correlation is given in the legend.<br>'''
+		'''+in_gene2+''' is given on the y-axis. '''
 
 		cortxt_fc='''<b>Correlation</b><br>
 		Each dot in the plot represent a microarray experiment with different
-		cell types, as specified in the legend of the plot. The foldchange for '''+in_gene+''' is given on the x-axis and foldchange for '''+in_gene2+''' is given on the y-axis. The stippled line represent a theoretical perfect correlation and the R<sup>2</sub> value for the correlation is given in the legend.<br>'''
+		cell types, as specified in the legend of the plot. The foldchange for '''+in_gene+''' is given on the x-axis and foldchange for '''+in_gene2+''' is given on the y-axis. '''
+
 		
-	cor_loglog=''' x- and y-axis are in log2 scale.<br>'''
-	cor_lg1='''x-axis is in log2 scale.<br>'''
-	cor_lg2='''y-axis is in log2 scale.<br>'''
-	single_log='''Expression is given on y-axis on a log2 scale.<br>'''
+	cor_loglog=''' x- and y-axis are in log2 scale.'''
+	cor_lg1='''x-axis is in log2 scale.'''
+	cor_lg2='''y-axis is in log2 scale.'''
+	single_log='''Expression is given on y-axis on a log2 scale.'''
 	
 	
 	
@@ -663,10 +664,13 @@ if __name__ == "__main__":
 			if in_gene2 is not None:#correlations
 				if log2gene2 and log2gene1: 
 					print cor_loglog
+					print 'The linear Pearson product-moment correlation coefficient is: R<sup>2</sup> = %.2f <br>'%(corr_coef*corr_coef)
 				elif log2gene2:
 					print cor_lg2
 				elif log2gene1:
 					print cor_lg2
+				else: #no log = print add line
+					print 'The stippled line represent a theoretical perfect correlation and the R<sup>2</sup> value for the correlation is given in the legend.<br>'
 			elif in_gene2 is None: #singles
 				if log2gene1:
 					print single_log				
