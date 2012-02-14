@@ -102,7 +102,7 @@ def beeswarm(data, names,out='beeswarm.pdf',title='',plot_median=False, use_mean
 	
 	if use_log:
 		pylab.yscale('log', basey=2)
-		pylab.ylabel('log2 expression')
+		pylab.ylabel('Expression (log2)')
 		
 		
 	for i,j in enumerate(x): 
@@ -399,7 +399,7 @@ if __name__ == "__main__":
 	
 		if log2gene1:
 			plt.xscale('log', basex=2)
-			plt.xlabel('log2 expression of %s'%in_gene)
+			plt.xlabel('Expression (log2) %s'%in_gene)
 			plt.xlim(xmax=plt.xlim()[1]*1.1)
 		else:
 			plt.xlabel('%s'%in_gene)
@@ -407,7 +407,7 @@ if __name__ == "__main__":
 		
 		if log2gene2:
 			plt.yscale('log', basey=2)
-			plt.ylabel('log2 expression of %s'%in_gene2)
+			plt.ylabel('Expression (log2) %s'%in_gene2)
 			plt.ylim(ymax=plt.ylim()[1]*1.1) #make room for the legend
 		else:
 			
@@ -630,9 +630,9 @@ if __name__ == "__main__":
 		cell types, as specified in the legend of the plot. The foldchange for '''+in_gene+''' is given on the x-axis and foldchange for '''+in_gene2+''' is given on the y-axis. The stippled line represent a theoretical perfect correlation and the R<sup>2</sub> value for the correlation is given in the legend.<br>'''
 		
 	cor_loglog=''' x- and y-axis are in log2 scale.<br>'''
-	cor_lg1='''x-axis is in log2 scale<br>'''
-	cor_lg2='''y-axis is in log2 scale<br>'''
-	single_log='''Expression is given on y-axis on a log2 scale<br>'''
+	cor_lg1='''x-axis is in log2 scale.<br>'''
+	cor_lg2='''y-axis is in log2 scale.<br>'''
+	single_log='''Expression is given on y-axis on a log2 scale.<br>'''
 	
 	
 	
