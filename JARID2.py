@@ -400,19 +400,19 @@ if __name__ == "__main__":
 		if log2gene1:
 			plt.xscale('log', basex=2)
 			plt.xlabel('log2 expression of %s'%in_gene)
-			plt.xlim(xmax=plt.xlim()[1]+2^10) #make room for the legend
+			plt.xlim(xmax=plt.xlim()[1]*1.1)
 		else:
 			plt.xlabel('%s'%in_gene)
-			plt.xlim(xmax=plt.xlim()[1]+1000) #make room for the legend
+			plt.xlim(xmax=plt.xlim()[1]*1.05) #make room for the legend
 		
 		if log2gene2:
 			plt.yscale('log', basey=2)
 			plt.ylabel('log2 expression of %s'%in_gene2)
-			plt.xlim(xmax=plt.xlim()[1]+2^10) #make room for the legend
+			plt.ylim(ymax=plt.ylim()[1]*1.1) #make room for the legend
 		else:
 			
-			plt.xlabel('%s'%in_gene)
-			plt.xlim(xmax=plt.xlim()[1]+1000) #make room for the legend
+			plt.ylabel('%s'%in_gene)
+			plt.ylim(ymax=plt.ylim()[1]*1.05) #make room for the legend
 		
 		
 		
@@ -614,10 +614,10 @@ if __name__ == "__main__":
 
 
 	singletxt='''	<b>Single gene lookup</b><br>
-		Each dot in the plot corresponds the expression of '''+in_gene+''' in a microarray. Horizontal lines represent the median expression for each class of cells. The y-axis is the log2 expression of the gene.'''
+		Each dot in the plot corresponds the expression of '''+in_gene+''' in a microarray. Horizontal lines represent the median expression for each class of cells.'''
 	
 	singletxt_fc='''	<b>Single gene lookup</b><br>
-	Each dot in the plot corresponds the foldchange of '''+in_gene+''' in a microarray. Horizontal lines represent the median expression for each class of cells. The y-axis is the log2 expression of the gene.'''
+	Each dot in the plot corresponds the foldchange of '''+in_gene+''' in a microarray. Horizontal lines represent the median expression for each class of cells.'''
 
 	if in_gene2 is not None:
 		cortxt='''<b>Correlation</b><br>
@@ -629,14 +629,18 @@ if __name__ == "__main__":
 		Each dot in the plot represent a microarray experiment with different
 		cell types, as specified in the legend of the plot. The foldchange for '''+in_gene+''' is given on the x-axis and foldchange for '''+in_gene2+''' is given on the y-axis. The stippled line represent a theoretical perfect correlation and the R<sup>2</sub> value for the correlation is given in the legend.<br>'''
 		
-
-
+	cor_loglog=''' x- and y-axis are in log2 scale.'''
+	cor_lg1='''x-axis is in log2 scale'''
+	cor_lg2='''y-axis is in log2 scale'''
+	single_log='''Expression is given on y-axis on a log2 scale'''
+	
+	
 	
 	
 	if WEB_opt: # some display
 		if in_gene is not None:
+			print head
 			if not fold_change:
-				print head
 				print '<img src=\"%s.png\" align=center>' % in_gene
 				# for human there are three choices : ['leukemia','normal','both'], if the fc flag is activated, then only leukemia are plotted.
 				if in_gene2 is None:
@@ -655,7 +659,6 @@ if __name__ == "__main__":
 				print '<br><a target=\"_blank\" href=\"%s.pdf\" title=\"\">Get plot in pdf format</a>' % in_gene
 				
 			else:
-				print head				
 				print '<img src=\"%s_fc.png\" align=center>' % in_gene
 				if in_gene2 is None:
 					print singletxt
@@ -667,10 +670,22 @@ if __name__ == "__main__":
 					print Normabr
 				else:
 					print AMLandNormabr 
-				
-				
 				print '<a target=\"_blank\" href=\"%s_fc.pdf\" title=\"\">Get plot in pdf format</a>' % in_gene
-			# print 'gene is #%s#' % in_gene
+			
+			#please note that we have at least one log axis - in case you haven't notest from the plot...
+			if in_gene2 is not None:#correlations
+				if log2gene2 and log2gene1: 
+					print cor_loglog
+				elif log2gene2:
+					print cor_lg2
+				elif log2gene1:
+					print cor_lg2
+			elif in_gene2 is None: #singles
+				if log2gene1:
+					print single_log
+					
+				
+				
 		else:
 			print "Please provide a gene!"
 			sys.exit(2)
