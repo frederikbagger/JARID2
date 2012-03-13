@@ -55,7 +55,8 @@ def import_sample_data(_file,sep='\t',verbose=False, line_to_skip=0):
 	pass
 #
 
-def beeswarm(data, names,out='beeswarm.pdf',title='',plot_median=False, use_mean=False, use_log=False):
+
+def beeswarm_adv(data, names,out='beeswarm.pdf',title='',plot_median=False, use_mean=False, use_log=False):
 	"""docstring for beeswarm
 	plots a beeswram plot.
 	data is an array or values
@@ -72,24 +73,50 @@ def beeswarm(data, names,out='beeswarm.pdf',title='',plot_median=False, use_mean
 	graphics=importr('graphics')
 	beeswarm= importr('beeswarm')
 	grdevices = importr('grDevices')
-	all_classes_order=[]
-	all_classes={}
+	classes2use_order=[]
+	classes2use={}
 	for index,classe in enumerate(names):
-		if classe not in all_classes:
-			all_classes_order.append(classe)
-			all_classes[classe]=[]
-			all_classes[classe].append(index)
+		if classe not in classes2use:
+			classes2use_order.append(classe)
+			classes2use[classe]=[]
+			classes2use[classe].append(index)
 		else:
-			all_classes[classe].append(index)
+			classes2use[classe].append(index)
+
+
+	#reduce the set
+	reduced_set={}
+	reduced_order=[]
+	reduced_names=[]
+	reduced_data=numpy.array([])
+	reduced_colors=[]
+	try:
+		for i in celltypes:
+			reduced_set[i]=classes2use[i]
+	except:
+		print 'You are calling for cell types %s not in the dataset.'%(i)
+		sys.exit(42)
+	classes2use = reduced_set 
+
+	for index,i in enumerate(classes2use_order):
+		if reduced_set.has_key(i):
+			reduced_order.append(i)
+			reduced_colors.append(colors[index])
+	classes2use_order = reduced_order
 	
+	for i,j in enumerate(names):
+		if classes2use.has_key(j):
+			reduced_names.append(j)
+			reduced_data = numpy.append(reduced_data, data[i])
 	
+	#model:
 	nn=robjects.StrVector(numpy.array(names))
 	fcdf=robjects.FloatVector(numpy.array(data))
 	cool=robjects.DataFrame({'Expression': fcdf , 'Class':nn})
 	Classes= robjects.r.factor(cool.rx2(2), levels = robjects.r.unique(cool.rx2(2)), ordered = 1)
 	robjects.globalenv['Classes']=Classes
 	
-	a=beeswarm.beeswarm( robjects.r("Expression ~ Classes") , data = cool, method = "center",pch=1, bg=robjects.r("rainbow(6)") ,col = robjects.r("rainbow(8)") , las =2 )
+	a=beeswarm.beeswarm( robjects.r("Expression ~ Classes") , data = cool, method = "center",pch=1, bg=robjects.r("rainbow(6)") ,col = robjects.r("rainbow(16)") , las =2 )
 	opt={'main':in_gene}
 	graphics.title( **opt)
 	grdevices.dev_off()
@@ -104,32 +131,120 @@ def beeswarm(data, names,out='beeswarm.pdf',title='',plot_median=False, use_mean
 		pylab.yscale('log', basey=2)
 		pylab.ylabel('Expression (log2)')
 		
+	
+	if plot_median:
+		for	 i in range(len(classes2use_order)):
+			z= numpy.array(classes2use[classes2use_order[i]]) 
+			m=meam_method(numpy.exp2(y[z]))
+			pylab.plot([i+1-.3, i+1+.3],[m,m],'b',linewidth=1.5, alpha=.7)
+#		pylab.plot([1,2],[0,0],'b',linewidth=1.5,alpha=.5)
+	pylab.xticks(range(len(classes2use_order)+1), numpy.concatenate([[''],classes2use_order],axis=0), rotation=90,size=9)
+	fig.autofmt_xdate(bottom=0.18)	
+		
+	print 'names:', names
+	print 'reduced_names', reduced_names
+	print 'data', data
+	print 'reduced_data', reduced_data
+	
+	
+	
+	nn=robjects.StrVector(numpy.array(reduced_names))
+	fcdf=robjects.FloatVector(numpy.array(reduced_data))
+	cool=robjects.DataFrame({'Expression': fcdf , 'Class':nn})
+	Classes= robjects.r.factor(cool.rx2(2), levels = robjects.r.unique(cool.rx2(2)), ordered = 1)
+	robjects.globalenv['Classes']=Classes
+	
+	a=beeswarm.beeswarm( robjects.r("Expression ~ Classes") , data = cool, method = "center",pch=1, bg=robjects.r("rainbow(6)") ,col = robjects.StrVector(reduced_colors) , las =2 )
+	x=numpy.array(a[0])
+	y=numpy.array(a[1])
+	c=numpy.array(a[3]) #r-colors
+	
+	for i,j in enumerate(x): 
+		pylab.plot(x[i],numpy.exp2(y[i]),'o',color=c[i][0:-2],alpha=.7) # R adds FF at the end of the color string, which is bad.#But I do not use R-colors, so [0:-2] is gone
+	
+
+
+	pylab.title(in_gene)
+
+	if type(out)==list:
+		for i in out:
+			pylab.savefig(i)
+	else:
+		pylab.savefig(out)
+
+	pylab.close()
+
+
+
+def beeswarm(data, names,out='beeswarm.pdf',title='', plot_median=False, use_mean=False, use_log=False):
+	"""docstring for beeswarm
+	plots a beeswram plot.
+	data is an array or values
+	names is the corresponding names for each data values.
+	
+	"""
+	import pylab
+	if use_mean:
+		meam_method = numpy.mean
+	else:
+		meam_method = numpy.median
+		
+	in_gene = title
+	graphics=importr('graphics')
+	beeswarm= importr('beeswarm')
+	grdevices = importr('grDevices')
+	classes2use_order=[]
+	classes2use={}
+	for index,classe in enumerate(names):
+		if classe not in classes2use:
+			classes2use_order.append(classe)
+			classes2use[classe]=[]
+			classes2use[classe].append(index)
+		else:
+			classes2use[classe].append(index)
+	
+	nn=robjects.StrVector(numpy.array(names))
+	fcdf=robjects.FloatVector(numpy.array(data))
+	cool=robjects.DataFrame({'Expression': fcdf , 'Class':nn})
+	Classes= robjects.r.factor(cool.rx2(2), levels = robjects.r.unique(cool.rx2(2)), ordered = 1)
+	robjects.globalenv['Classes']=Classes
+	
+	a=beeswarm.beeswarm( robjects.r("Expression ~ Classes") , data = cool, method = "center",pch=1, bg=robjects.r("rainbow(6)") ,col = robjects.StrVector(colors) , las =2 )
+	opt={'main':in_gene}
+	graphics.title( **opt)
+	grdevices.dev_off()
+	
+	x=numpy.array(a[0])
+	y=numpy.array(a[1])
+	c=numpy.array(a[3])
+	
+	fig=pylab.figure()
+	
+	if use_log:
+		pylab.yscale('log', basey=2)
+		pylab.ylabel('Expression (log2)')
 		
 	for i,j in enumerate(x): 
 		pylab.plot(x[i],numpy.exp2(y[i]),'o',color=c[i][0:-2],alpha=.7) # R adds FF at the end of the color string, which is bad.
 		
+	
 	if plot_median:
-		all_classes_order=[]
-		all_classes={}
-#		names = numpy.array( [ i.split(')')[0]+')'	for i in a.rownames ] ) # F#? R renames things...
-		for index,classe in enumerate(names):
-			if classe not in all_classes:
-				all_classes_order.append(classe)
-				all_classes[classe]=[]
-				all_classes[classe].append(index)
-			else:
-				all_classes[classe].append(index)
-		
-		for	 i in range(len (all_classes_order)):
-			z= numpy.array(all_classes[all_classes_order[i]]) 
+		for	 i in range(len(classes2use_order)):
+			z= numpy.array(classes2use[classes2use_order[i]]) 
 			m=meam_method(numpy.exp2(y[z]))
 			pylab.plot([i+1-.3, i+1+.3],[m,m],'b',linewidth=1.5, alpha=.7)
 #		pylab.plot([1,2],[0,0],'b',linewidth=1.5,alpha=.5)
-	pylab.xticks(range(len(all_classes_order)+1), numpy.concatenate([[''],all_classes_order],axis=0), rotation=90,size=9)
+	pylab.xticks(range(len(classes2use_order)+1), numpy.concatenate([[''],classes2use_order],axis=0), rotation=90,size=9)
 	fig.autofmt_xdate(bottom=0.18)	
 		
 	pylab.title(in_gene)
-	pylab.savefig(out)
+
+	if type(out)==list:
+		for i in out:
+			pylab.savefig(i)
+	else:
+		pylab.savefig(out)
+
 	pylab.close()
 
 
@@ -201,11 +316,48 @@ if __name__ == "__main__":
 	parser.add_argument('-i','--input', help='Gene 1 to be plotted.')
 	parser.add_argument('-j','--input2', help='Gene 2 to be plotted.')#, default='NULL')
 	parser.add_argument('-f','--foldchange', action='store_const', const=True, default=False, help='Plot foldchange of gene against normal counterpart.')
-	parser.add_argument('data_seq',help='dummy argument - remove when common2 has been updated', type=argparse.FileType('r'), default=sys.stdin )
+	parser.add_argument('data_seq',help='dummy argument - remove when common2 has been updated', default=argparse.SUPPRESS )
 	parser.add_argument('-o','--organism', type=str,choices= ['human','mouse'] , default='human', help='use human or mouse dataset.'  )
 	parser.add_argument('-l','--data', help='Data kind to be plotted.', choices= ['leukemia','normal','both'], default='both')
 	parser.add_argument('-lg1','--log2gene1', action='store_const', const=True, default=False, help='Give output of gene 1 in log2 transformed axis')
 	parser.add_argument('-lg2','--log2gene2', action='store_const', const=True, default=False, help='Give output of gene 2 in log2 transformed axis')
+
+#advanced options
+
+	parser.add_argument('-adv','--advanced', action='store_const', const=True, default=False, help='Used advanced option to clear all default celltypes in output. Cells must be selected manually') 
+
+#cell types
+	parser.add_argument("-HSC_BM","--HSC_BM", dest='celltypes', action="append_const", const="HSC_BM", default=argparse.SUPPRESS, help="Hematopoietic") 
+	parser.add_argument("-Early","--Early", dest='celltypes', action="append_const", const="early HPC_BM", default=argparse.SUPPRESS, help="-Early") 
+	parser.add_argument("-CMP","--CMP", dest='celltypes', action="append_const", const="CMP", default=argparse.SUPPRESS, help="Common") 
+	parser.add_argument("-GMP","--GMP", dest='celltypes', action="append_const", const="GMP", default=argparse.SUPPRESS, help="Granulocyte") 
+	parser.add_argument("-MEP","--MEP", dest='celltypes', action="append_const", const="MEP", default=argparse.SUPPRESS, help="Megakaryocyte-erythroid") 
+	parser.add_argument("-PM_BM","--PM_BM", dest='celltypes', action="append_const", const="PM_BM", default=argparse.SUPPRESS, help="Promyelocyte") 
+	parser.add_argument("-MY_BM","--MY_BM", dest='celltypes', action="append_const", const="MY_BM", default=argparse.SUPPRESS, help="Myelocyte") 
+	parser.add_argument("-PMN_BM","--PMN_BM", dest='celltypes', action="append_const", const="PMN_BM", default=argparse.SUPPRESS, help="Polymorphonuclear") 
+	parser.add_argument("-PMN_PB","--PMN_PB", dest='celltypes', action="append_const", const="PMN_PB", default=argparse.SUPPRESS, help="Polymorphonuclear") 
+	parser.add_argument("-cd14+monocytes","--cd14+monocytes", dest='celltypes', action="append_const", const="cd14+ monocytes", default=argparse.SUPPRESS, help="cd14+") 
+	parser.add_argument("-AMLI_ETO","--AMLI_ETO", dest='celltypes', action="append_const", const="AMLI_ETO", default=argparse.SUPPRESS, help="AML") 
+	parser.add_argument("-APL","--APL", dest='celltypes', action="append_const", const="APL", default=argparse.SUPPRESS, help="AML") 
+	parser.add_argument("-inv16","--inv16", dest='celltypes', action="append_const", const="AML with inv(16)/t(16;16)", default=argparse.SUPPRESS, help="AML") 
+	parser.add_argument("-t11q23","--t11q23", dest='celltypes', action="append_const", const="AML with t(11q23)/MLL", default=argparse.SUPPRESS, help="AML") 
+	parser.add_argument("-LT_HSC","--LT_HSC", dest='celltypes', action="append_const", const="LT-HSC", default=argparse.SUPPRESS, help="Long") 
+	parser.add_argument("-ST_HSC","--ST_HSC", dest='celltypes', action="append_const", const="ST-HSC", default=argparse.SUPPRESS, help="Short") 
+	parser.add_argument("-LMPP","--LMPP", dest='celltypes', action="append_const", const="LMPP", default=argparse.SUPPRESS, help="Lymphoid-primed") 
+	parser.add_argument("-CLP","--CLP", dest='celltypes', action="append_const", const="CLP", default=argparse.SUPPRESS, help="Common") 
+	parser.add_argument("-ETP","--ETP", dest='celltypes', action="append_const", const="ETP", default=argparse.SUPPRESS, help="Early") 
+	parser.add_argument("-ProB","--ProB", dest='celltypes', action="append_const", const="ProB", default=argparse.SUPPRESS, help="Pro-B") 
+	parser.add_argument("-PreB","--PreB", dest='celltypes', action="append_const", const="PreB", default=argparse.SUPPRESS, help="Pre-B") 
+	parser.add_argument("-IgM+SP","--IgM+SP", dest='celltypes', action="append_const", const="IgM+SP", default=argparse.SUPPRESS, help="Immunoglobulin") 
+	parser.add_argument("-CD4","--CD4", dest='celltypes', action="append_const", const="CD4", default=argparse.SUPPRESS, help="CD4") 
+	parser.add_argument("-NKmature","--NKmature", dest='celltypes', action="append_const", const="NKmature", default=argparse.SUPPRESS, help="Mature") 
+	parser.add_argument("-MkE","--MkE", dest='celltypes', action="append_const", const="MkE", default=argparse.SUPPRESS, help="Megakaryocyte") 
+	parser.add_argument("-MkP","--MkP", dest='celltypes', action="append_const", const="MkP", default=argparse.SUPPRESS, help="Megakaryocyte") 
+	parser.add_argument("-PreCFUE","--PreCFUE", dest='celltypes', action="append_const", const="PreCFUE", default=argparse.SUPPRESS, help="Pre-colony-forming") 
+	parser.add_argument("-CFUE","--CFUE", dest='celltypes', action="append_const", const="CFUE", default=argparse.SUPPRESS, help="Colony-forming") 
+	parser.add_argument("-ProE","--ProE", dest='celltypes', action="append_const", const="ProE", default=argparse.SUPPRESS, help="Erythroid")
+	
+
 	args = parser.parse_args()
 
 	in_gene = args.input
@@ -220,6 +372,16 @@ if __name__ == "__main__":
 	fold_change = args.foldchange
 	organism = args.organism
 	data_to_use = args.data
+	
+	adv_mode = args.advanced
+	if adv_mode:
+		try:
+			celltypes = args.celltypes
+		except:
+			print "When using advanced mode each celltype must be given as argument"
+			sys.exit(42)
+	
+	
 						# CONFIG FILES #
 ##################################################################################	
 ##################################################################################	
@@ -230,10 +392,11 @@ if __name__ == "__main__":
 	path_to_use = config[0][1]	#first line is the path
 	WEB_opt = int(config[1][1]) #second line is the web option.
 ##################################################################################	
-			
+	colors=['#FAAFBEFF','#808000FF','#FFF8C6FF','#8E35EFFF','#A52A2AFF', '#FFFFFFFF','#FF0000FF', '#008000FF', '#C0C0C0FF', '#0000FFFF', '#FFFF00FF', '#FF00FFFF', '#8AFB17FF','#FFA500FF', '#000000FF', '#00FFFFFF']
+	py_colors=['#FAAFBE','#808000','#FFF8C6','#8E35EF','#A52A2A', '#FFFFFF','#FF0000', '#008000', '#C0C0C0', '#0000FF', '#FFFF00', '#FF00FF', '#8AFB17','#FFA500', '#000000', '#00FFFF']
+
 ######################################################
-#	#sys.path.append('/Users/frederikbagger/BRIC')	 #
-######################################################
+
 	
 	# load appropriate data file: 
 	
@@ -246,8 +409,8 @@ if __name__ == "__main__":
 			elif data_to_use == 'normal' :
 				all_data = pickle_load(path_to_use + '/beeswarn_data/nl_human_data.pkl')
 			else:
-				merged_data = pickle_load( path_to_use + '/beeswarn_data/nl_human_data.pkl')	   # NOTA : nl_human_data will be updated as soon as the Cancer vs normal 
-																								   #		paper is out.
+				merged_data = pickle_load( path_to_use + '/beeswarn_data/nl_human_data.pkl')	   # NOTA : nl_human_data will be updated as soon as the Cancer vs normal paper is out.
+																								   
 				all_data = pickle_load(path_to_use + '/beeswarn_data/all_data_expr.pkl')
 				
 				all_data['colnames'] = numpy.concatenate([all_data['colnames'],merged_data['colnames']],axis=0)
@@ -311,11 +474,15 @@ if __name__ == "__main__":
 			genename= in_gene.upper()
 		
 		if fold_change:                                    
-			beeswarm(numpy.array(data),all_data['colnames'], title = genename, out= in_gene+'_fc.pdf', plot_median=True, use_log=log2gene1) 
-			beeswarm(numpy.array(data),all_data['colnames'], title = genename, out= in_gene+'_fc.png', plot_median=True, use_log=log2gene1)
+			if adv_mode:
+				beeswarm_adv(numpy.array(data),all_data['colnames'], title = genename, out= [in_gene+'_fc.pdf', in_gene+'_fc.png'], plot_median=True, use_log=log2gene1) 
+			else:
+				beeswarm(numpy.array(data),all_data['colnames'], title = genename, out= [in_gene+'_fc.pdf', in_gene+'_fc.png'], plot_median=True, use_log=log2gene1) 
 		else:                                              
-			beeswarm(numpy.array(data),all_data['colnames'], title = genename, out= in_gene+'.pdf', plot_median=True, use_log=log2gene1)
-			beeswarm(numpy.array(data),all_data['colnames'], title = genename, out= in_gene+'.png', plot_median=True, use_log=log2gene1)
+			if adv_mode:
+				beeswarm_adv(numpy.array(data),all_data['colnames'], title = genename, out= [in_gene+'.pdf', in_gene+'.png'], plot_median=True, use_log=log2gene1)
+			else:
+				beeswarm(numpy.array(data),all_data['colnames'], title = genename, out= [in_gene+'.pdf', in_gene+'.png'], plot_median=True, use_log=log2gene1)
                                                            
 
 		
@@ -367,20 +534,35 @@ if __name__ == "__main__":
 #		print 'using %d probeset(s) for %s'%(len(probes_to_use),in_gene)
 #		print 'using %d probeset(s) for %s'%(len(probes_to_use2),in_gene2)
 
-		colors=['#ed2921' , '#5f14fa' ,'#fac514', '#0c9ffa' , '#89fa0c' ,  '#ed1dc5' , '#111dfb' , '#05fb4c' , '#fbea09' , '#ff6914','#ed2921' , '#5f14fa' , '#0c9ffa' , '#89fa0c' , '#fac514' , '#ed1dc5' , '#111dfb' , '#05fb4c' , '#fbea09' , '#ff6914','#ed2921' , '#5f14fa' , '#0c9ffa' , '#89fa0c' , '#fac514' , '#ed1dc5' , '#111dfb' , '#05fb4c' , '#fbea09' , '#ff6914','#ed2921' , '#5f14fa' , '#0c9ffa' , '#89fa0c' , '#fac514' , '#ed1dc5' , '#111dfb' , '#05fb4c' , '#fbea09' , '#ff6914','#ed2921' , '#5f14fa' , '#0c9ffa' , '#89fa0c' , '#fac514' , '#ed1dc5' , '#111dfb' , '#05fb4c' , '#fbea09' , '#ff6914']
 		markers = ['s' , 'o' , '^' , '>' , 'v' , '<' , 'd' , 'p' , 'h' , '8' ,'s' , 'o' , '^' , '>' , 'v' , '<' , 'd' , 'p' , 'h' , '8' ,'s' , 'o' , '^' , '>' , 'v' , '<' , 'd' , 'p' , 'h' , '8' ,'s' , 'o' , '^' , '>' , 'v' , '<' , 'd' , 'p' , 'h' , '8' ]
 		
-		all_classes_order=[]
-		all_classes={}
+		classes2use_order=[]
+		classes2use={}
+		
 		for index,classe in enumerate(all_names):
-			if classe not in all_classes:
-				all_classes_order.append(classe)
-				all_classes[classe]=[]
-				all_classes[classe].append(index)
+			if classe not in classes2use:
+				classes2use_order.append(classe)
+				classes2use[classe]=[]
+				classes2use[classe].append(index)
 			else:
-				all_classes[classe].append(index)
-	#	print all_classes
+				classes2use[classe].append(index)
 
+
+		if adv_mode:
+			reduced_set={}
+			reduced_order=[]
+			try:
+				for i in celltypes:
+					reduced_set[i]=classes2use[i]
+			except:
+				print 'You are calling for cell types %s not in the dataset.'%(i)
+				sys.exit(42)
+			classes2use = reduced_set 
+
+			for i in classes2use_order:
+				if reduced_set.has_key(i):
+					reduced_order.append(i)
+			classes2use_order=reduced_order
 
 		#compute corr coef line.
 		lin_fit = numpy.polyfit(numpy.array(fc),numpy.array(fc2),1) # this returns the coef of the polynomial fit
@@ -388,8 +570,8 @@ if __name__ == "__main__":
 		line_x = numpy.linspace(numpy.array(fc).min(),numpy.array(fc).max()) # this is to have some points to actually draw the line. 
 
 		plots=[]
-		for i,classe in enumerate(all_classes):
-			a=plt.plot(numpy.array(fc)[all_classes[classe]],numpy.array(fc2)[all_classes[classe]],'o',alpha=.5, color=colors[i], marker=markers[i], label=classe)
+		for i,classe in enumerate(classes2use):
+			a=plt.plot(numpy.array(fc)[classes2use[classe]],numpy.array(fc2)[classes2use[classe]],'o',alpha=.5, color=py_colors[i], marker=markers[i], label=classe)
 			plots.append(a)
 		if not log2gene1 and not log2gene2:
 			plots.append( plt.plot(line_x, line_x*lin_fit[0] + lin_fit[1] , '--b', label='$R^2$ = %.2f'%(corr_coef*corr_coef) )) #we append the plot of the line here
@@ -563,10 +745,10 @@ if __name__ == "__main__":
 	MouseNormabr='''	<br>Abrieviations:<br>				
 		<table border="0">
 		<tr>
-		<td> LT_HSC </td> <td> Long term Hematopoietic stem cell                  </td>
+		<td> LT-HSC </td> <td> Long term Hematopoietic stem cell                  </td>
 		</tr>
 		<tr>
-		<td> ST_HSC </td> <td> Short term Hematopoietic stem cell      </td>
+		<td> ST-HSC </td> <td> Short term Hematopoietic stem cell      </td>
 		</tr>
 		<tr>
 		<td> LMPP </td> <td> Lymphoid-primed multipotential progenitors                   </td>
