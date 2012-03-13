@@ -94,6 +94,7 @@ def beeswarm_adv(data, names,out='beeswarm.pdf',title='',plot_median=False, use_
 		for i in celltypes:
 			reduced_set[i]=classes2use[i]
 	except:
+		print head
 		print 'You are calling for cell types %s not in the dataset.'%(i)
 		sys.exit(42)
 	classes2use = reduced_set 
@@ -131,7 +132,6 @@ def beeswarm_adv(data, names,out='beeswarm.pdf',title='',plot_median=False, use_
 		pylab.yscale('log', basey=2)
 		pylab.ylabel('Expression (log2)')
 		
-	
 	if plot_median:
 		for	 i in range(len(classes2use_order)):
 			z= numpy.array(classes2use[classes2use_order[i]]) 
@@ -141,12 +141,6 @@ def beeswarm_adv(data, names,out='beeswarm.pdf',title='',plot_median=False, use_
 	pylab.xticks(range(len(classes2use_order)+1), numpy.concatenate([[''],classes2use_order],axis=0), rotation=90,size=9)
 	fig.autofmt_xdate(bottom=0.18)	
 		
-	print 'names:', names
-	print 'reduced_names', reduced_names
-	print 'data', data
-	print 'reduced_data', reduced_data
-	
-	
 	
 	nn=robjects.StrVector(numpy.array(reduced_names))
 	fcdf=robjects.FloatVector(numpy.array(reduced_data))
@@ -161,9 +155,7 @@ def beeswarm_adv(data, names,out='beeswarm.pdf',title='',plot_median=False, use_
 	
 	for i,j in enumerate(x): 
 		pylab.plot(x[i],numpy.exp2(y[i]),'o',color=c[i][0:-2],alpha=.7) # R adds FF at the end of the color string, which is bad.#But I do not use R-colors, so [0:-2] is gone
-	
-
-
+		
 	pylab.title(in_gene)
 
 	if type(out)==list:
@@ -173,9 +165,10 @@ def beeswarm_adv(data, names,out='beeswarm.pdf',title='',plot_median=False, use_
 		pylab.savefig(out)
 
 	pylab.close()
-
-
-
+	return reduced_set
+	
+	
+	
 def beeswarm(data, names,out='beeswarm.pdf',title='', plot_median=False, use_mean=False, use_log=False):
 	"""docstring for beeswarm
 	plots a beeswram plot.
@@ -216,14 +209,14 @@ def beeswarm(data, names,out='beeswarm.pdf',title='', plot_median=False, use_mea
 	
 	x=numpy.array(a[0])
 	y=numpy.array(a[1])
-	c=numpy.array(a[3])
+	c=numpy.array(a[3]) #r-colors
 	
 	fig=pylab.figure()
 	
 	if use_log:
 		pylab.yscale('log', basey=2)
 		pylab.ylabel('Expression (log2)')
-		
+	
 	for i,j in enumerate(x): 
 		pylab.plot(x[i],numpy.exp2(y[i]),'o',color=c[i][0:-2],alpha=.7) # R adds FF at the end of the color string, which is bad.
 		
@@ -238,14 +231,15 @@ def beeswarm(data, names,out='beeswarm.pdf',title='', plot_median=False, use_mea
 	fig.autofmt_xdate(bottom=0.18)	
 		
 	pylab.title(in_gene)
-
+	
 	if type(out)==list:
 		for i in out:
 			pylab.savefig(i)
 	else:
 		pylab.savefig(out)
-
+		
 	pylab.close()
+	return classes2use
 
 
 
@@ -308,9 +302,7 @@ def find_probes(gene,organism):
 	
 	
 	
-#################################################### Functions ############################################
-
-
+#################################################### End of functions ########################################
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Plots gene expression accross the hematopoietic system.')
 	parser.add_argument('-i','--input', help='Gene 1 to be plotted.')
@@ -396,7 +388,6 @@ if __name__ == "__main__":
 	py_colors=['#FAAFBE','#808000','#FFF8C6','#8E35EF','#A52A2A', '#FFFFFF','#FF0000', '#008000', '#C0C0C0', '#0000FF', '#FFFF00', '#FF00FF', '#8AFB17','#FFA500', '#000000', '#00FFFF']
 
 ######################################################
-
 	
 	# load appropriate data file: 
 	
@@ -418,15 +409,44 @@ if __name__ == "__main__":
 				
 		else:
 			all_data = pickle_load(path_to_use + '/beeswarn_data/all_data_fc.pkl')
-#
-###########################################################
 
+###########################################################
+	# HTML header for output
+	head='''<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+		<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+		<head>
+		<title> Servers.binf.ku.dk | SHS </title>
+		<meta name="language" content="en" />
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+		<style type="text/css">
+		body {
+		font-family: 'ArialMT', 'Arial', 'sans-serif';
+		font-size: 14px;
+		color: #3E3535;
+		background-color: #FFFFFF;
+		line-height: 20px;
+		max-width: 630px;
+		margin: 20px auto 20px auto;
+		padding: 0px;
+		}
+
+		h1.title {font-size: 36px;}
+		h2.title {font-size: 36px;}
+		pre		 {font-size: 12px;}
+		boring	 {font-size: 12px}
+		</style>	
+		</head>
+		<body>
+		<br><p style="font-size:150%;font-weight:bold;text-align:center">Welcome to the <span style="color:silver;font-size:250%">HemaExplorer</span></p><p style="text-align:center"><i><FONT COLOR="#000000"> --- See the expression of your favourite gene in the hematopoietic system --- </FONT></i></p>
+		<!-- ##### ##### HEADER END ##### ##### -->'''
+#########################################################
 	# get list of probes for the different genes.
 	
 	probes_names = find_probes(in_gene, organism)
 	
 	if probes_names == None:
-		print 'Gene name not found on array..'
+		print head
+		print '%s could not be found on array. Maybe you are using an ambigous gene name. If the gene is in database you might find an alias to your gene name at <a href="http://www.genecards.org/">Genecards</a>. <br><br> To get more details about genes in our database see our <a href="http://servers.binf.ku.dk/shs/help.php">help page</a>. <br><br> <a href="http://servers.binf.ku.dk/shs/">Go back</a>'%(in_gene)
 		sys.exit(2)
 	
 	probes_to_use=[]
@@ -441,7 +461,8 @@ if __name__ == "__main__":
 		probes_names2 = find_probes(in_gene2, organism)
 		
 		if probes_names2 == None:
-			print 'Gene 2 name not found on array..'
+			print head
+			print '%s could not be found on array. Maybe you are using an ambigous gene name. If the gene is in database you might find an alias to your gene name at <a href="http://www.genecards.org/">Genecards</a>. <br><br> To get more details about genes in our database see our <a href="http://servers.binf.ku.dk/shs/help.php">help page</a>.<br><br> <a href="http://servers.binf.ku.dk/shs/">Go back</a>'%(in_gene2)
 			sys.exit(2)
 			
 		probes_to_use2=[]
@@ -458,7 +479,8 @@ if __name__ == "__main__":
 #		print probes_to_use
 		data=[]
 		if len(probes_to_use) == 0:
-			print 'Gene not found on array..'
+			print head
+			print '%s could not be found on array. Maybe you are using an ambigous gene name. If the gene is in database you might find an alias to your gene name at <a href="http://www.genecards.org/">Genecards</a>. <br><br> To get more details about genes in our database see our <a href="http://servers.binf.ku.dk/shs/help.php">help page</a>.<br><br> <a href="http://servers.binf.ku.dk/shs/">Go back</a>'%(in_gene)
 			sys.exit(999)
 
 		a=all_data['data'][probes_to_use,:]
@@ -475,17 +497,17 @@ if __name__ == "__main__":
 		
 		if fold_change:                                    
 			if adv_mode:
-				beeswarm_adv(numpy.array(data),all_data['colnames'], title = genename, out= [in_gene+'_fc.pdf', in_gene+'_fc.png'], plot_median=True, use_log=log2gene1) 
+				classes2use = beeswarm_adv(numpy.array(data),all_data['colnames'], title = genename, out= [in_gene+'_fc.pdf', in_gene+'_fc.png'], plot_median=True, use_log=log2gene1) 
 			else:
-				beeswarm(numpy.array(data),all_data['colnames'], title = genename, out= [in_gene+'_fc.pdf', in_gene+'_fc.png'], plot_median=True, use_log=log2gene1) 
+				classes2use = beeswarm(numpy.array(data),all_data['colnames'], title = genename, out= [in_gene+'_fc.pdf', in_gene+'_fc.png'], plot_median=True, use_log=log2gene1) 
 		else:                                              
 			if adv_mode:
-				beeswarm_adv(numpy.array(data),all_data['colnames'], title = genename, out= [in_gene+'.pdf', in_gene+'.png'], plot_median=True, use_log=log2gene1)
+				classes2use = beeswarm_adv(numpy.array(data),all_data['colnames'], title = genename, out= [in_gene+'.pdf', in_gene+'.png'], plot_median=True, use_log=log2gene1)
 			else:
-				beeswarm(numpy.array(data),all_data['colnames'], title = genename, out= [in_gene+'.pdf', in_gene+'.png'], plot_median=True, use_log=log2gene1)
+				classes2use = beeswarm(numpy.array(data),all_data['colnames'], title = genename, out= [in_gene+'.pdf', in_gene+'.png'], plot_median=True, use_log=log2gene1)
                                                            
 
-		
+	
 	else:	   # here we plot the correlation
 		import matplotlib.pyplot as plt
 		fc=[]
@@ -555,6 +577,7 @@ if __name__ == "__main__":
 				for i in celltypes:
 					reduced_set[i]=classes2use[i]
 			except:
+				print head
 				print 'You are calling for cell types %s not in the dataset.'%(i)
 				sys.exit(42)
 			classes2use = reduced_set 
@@ -623,176 +646,9 @@ if __name__ == "__main__":
 
 
 ##################################################################################	
-#MAKE HTML
-	head='''<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-		<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
-		<head>
-		<title> Servers.binf.ku.dk | SHS </title>
-		<meta name="language" content="en" />
-		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-		<style type="text/css">
-		body {
-		font-family: 'ArialMT', 'Arial', 'sans-serif';
-		font-size: 14px;
-		color: #3E3535;
-		background-color: #FFFFFF;
-		line-height: 20px;
-		max-width: 630px;
-		margin: 20px auto 20px auto;
-		padding: 0px;
-		}
+#MAKE HTML text
 
-		h1.title {font-size: 36px;}
-		h2.title {font-size: 36px;}
-		pre		 {font-size: 12px;}
-		boring	 {font-size: 12px}
-		</style>	
-		</head>
-		<body>
-		<br><p style="font-size:150%;font-weight:bold;text-align:center">Welcome to the <span style="color:silver;font-size:250%">HemaExplorer</span></p><p style="text-align:center"><i><FONT COLOR="#000000"> --- See the expression of your favourite gene in the hematopoietic system --- </FONT></i></p>
-		<!-- ##### ##### HEADER END ##### ##### -->'''
-	
-	AMLabr='''<br>Abrieviations:<br>				
-		<table border="0">
-		<tr>
-		<td> AMLI_ETO      </td> <td>  AML with t(8;21)                                  </td>
-		</tr>
-		<tr>
-		<td> APL       </td> <td>  AML with t(15;17)                                    </td>
-		</tr>
-		<tr>
-		<td> AML with inv(16)/t(16;16)  </td> <td>  AML with inv(16)/t(16;16)            </td>
-		</tr>
-		<tr>
-		<td> AML with t(11q23)/MLL   </td> <td>  AML with t(11q23)/MLL                   </td>
-		</tr>
-		</table>'''
-		
-	Normabr='''	<br>Abrieviations:<br>				
-		<table border="0">
-		<tr>
-		<td> HSC_BM </td> <td> Hematopoietic stem cells from bone marrow                  </td>
-		</tr>
-		<tr>
-		<td> Early HPC_BM </td> <td> Hematopoietic progenitor cells from bone marrow      </td>
-		</tr>
-		<tr>
-		<td> CMP </td> <td> Common myeloid progenitor cell                                </td>
-		</tr>
-		<tr>
-		<td> GMP</td> <td> Granulocyte macrophage progenitor                             </td>
-		</tr>
-		<tr>
-		<td> MEP </td> <td> Megakaryocyte-erythroid progenitor cell                       </td>
-		</tr>
-		<tr>
-		<td> PM_BM </td> <td> Promyelocyte from bone marrow                               </td>
-		</tr>
-		<tr>
-		<td> MY_BM </td> <td> Myelocyte from bone marrow                                  </td>
-		</tr>
-		<tr>
-		<td> PMN_BM </td> <td> Polymorphonuclear cells from bone marrow                   </td>
-		</tr>
-		<tr>
-		<td> PMN_PB </td> <td> Polymorphonuclear cells from peripheral blood              </td>
-		</tr>
-		</table>'''
-		
-	AMLandNormabr='''	<br>Abrieviations:<br>				
-		<table border="0">
-		<tr>
-		<td> HSC_BM </td> <td> Hematopoietic stem cells from bone marrow                  </td>
-		</tr>
-		<tr>
-		<td> Early HPC_BM </td> <td> Hematopoietic progenitor cells from bone marrow      </td>
-		</tr>
-		<tr>
-		<td> CMP </td> <td> Common myeloid progenitor cell                                </td>
-		</tr>
-		<tr>
-		<td> GMP</td> <td> Granulocyte monocyte progenitors                              </td>
-		</tr>
-		<tr>
-		<td> MEP </td> <td> Megakaryocyte-erythroid progenitor cell                       </td>
-		</tr>
-		<tr>
-		<td> PM_BM </td> <td> Promyelocyte from bone marrow                               </td>
-		</tr>
-		<tr>
-		<td> MY_BM </td> <td> myelocyte from bone marrow                                  </td>
-		</tr>
-		<tr>
-		<td> PMN_BM </td> <td> Polymorphonuclear cells from bone marrow                   </td>
-		</tr>
-		<tr>
-		<td> PMN_PB </td> <td> polymorphonuclear cells from peripheral blood              </td>
-		</tr>
-		<tr>
-		<td> AMLI_ETO      </td> <td>  AML with t(8;21)                                  </td>
-		</tr>
-		<tr>
-		<td> APL       </td> <td>  AML with t(15;17)                                    </td>
-		</tr>
-		<tr>
-		<td> AML with inv(16)/t(16;16)  </td> <td>  AML with inv(16)/t(16;16)            </td>
-		</tr>
-		<tr>
-		<td> AML with t(11q23)/MLL   </td> <td>  AML with t(11q23)/MLL                   </td>
-		</tr>
-		</table>'''
-
-	MouseNormabr='''	<br>Abrieviations:<br>				
-		<table border="0">
-		<tr>
-		<td> LT-HSC </td> <td> Long term Hematopoietic stem cell                  </td>
-		</tr>
-		<tr>
-		<td> ST-HSC </td> <td> Short term Hematopoietic stem cell      </td>
-		</tr>
-		<tr>
-		<td> LMPP </td> <td> Lymphoid-primed multipotential progenitors                   </td>
-		</tr>
-		<tr>
-		<td> CLP</td> <td> Common lymphoid progenitor cells                             </td>
-		</tr>
-		<tr>
-		<td> ETP </td> <td> Early T-cell progenitor                      </td>
-		</tr>
-		<tr>
-		<td> ProB </td> <td> Pro-B cell                               </td>
-		</tr>
-		<tr>
-		<td> PreB </td> <td> Pre-B cell                                  </td>
-		</tr>
-		<tr>
-		<td> IgM+SP </td> <td> Immunoglobulin M positive side population cells                   </td>
-		</tr>
-		<tr>
-		<td> CD4 </td> <td> CD4 cells              </td>
-		</tr>
-		<tr>
-		<td> NKmature </td> <td>  Mature natural killer cells                              </td>
-		</tr>
-		<tr>
-		<td> GMP </td> <td>  Granulocyte monocyte progenitors                            </td>
-		</tr>
-		<tr>
-		<td> MkE </td> <td>  Megakaryocyte erythroid precursors           </td>
-		</tr>
-		<tr>
-		<td> MkP </td> <td> Megakaryocyte precursor                   </td>
-		</tr>
-		<tr>
-		<td> PreCFUE </td> <td> Pre-colony-forming unit erythroid cells                   </td>
-		</tr>
-		<tr>
-		<td> CFUE </td> <td> Colony-forming unit erythroid cells                   </td>
-		</tr>
-		<tr>
-		<td> ProE </td> <td> Erythroid progenitor cells                 </td>
-		</tr>
-		</table>'''
+	d = {'cd14+ monocytes':'CD14 positive Monocytes','HSC_BM':'Hematopoietic stem cells from bone marrow','early HPC_BM':'Hematopoietic progenitor cells from bone marrow','CMP':'Common myeloid progenitor cell','GMP':'Granulocyte monocyte progenitors','MEP':'Megakaryocyte-erythroid progenitor cell','PM_BM':'Promyelocyte from bone marrow','MY_BM':'Myelocyte from bone marrow','PMN_BM':'Polymorphonuclear cells from bone marrow','PMN_PB':'Polymorphonuclear cells from peripheral blood','AMLI_ETO':'AML with t(8;21)','APL':'AML with t(15;17)','AML with inv(16)/t(16;16)':'AML with inv(16)/t(16;16)','AML with t(11q23)/MLL':'AML with t(11q23)/MLL','LT-HSC':'Long term Hematopoietic stem cell','ST-HSC':'Short term Hematopoietic stem cell','LMPP':'Lymphoid-primed multipotential progenitors','CLP':'Common lymphoid progenitor cells','ETP':'Early T-cell progenitor','ProB':'Pro-B cell','PreB':'Pre-B cell','IgM+SP':'Immunoglobulin M positive side population cells','CD4':'CD4 cells','NKmature':'Mature natural killer cells','GMP':'Granulocyte monocyte progenitors','MkE':'Megakaryocyte erythroid precursors','MkP':'Megakaryocyte precursor','PreCFUE':'Pre-colony-forming unit erythroid cells','CFUE':'Colony-forming unit erythroid cells','ProE':'Erythroid progenitor cells'}
 
 
 	singletxt='''	<b>Single gene lookup</b><br>
@@ -856,24 +712,21 @@ if __name__ == "__main__":
 			elif in_gene2 is None: #singles
 				if log2gene1:
 					print single_log				
+
+			#print abbreviation table
+			print '<br>Abrieviations:<br> <table border="0">'
+			for classe in classes2use:
+				print '<tr> <td>', classe, '</td> <td>', d[classe], '</td> </tr>'
+			print '</table>'
+
 				
-			#print abbreviations table
- 			if organism == 'mouse':
- 				print MouseNormabr
- 			elif data_to_use == 'leukemia' :
- 				print AMLabr
- 			elif data_to_use == 'normal' :
- 				print Normabr
- 			else:
- 				print AMLandNormabr 
-
-
 			if not fold_change:
 				print '<br><a target=\"_blank\" href=\"%s.pdf\" title=\"\">Get plot in pdf format</a>' % in_gene		
 			else:
 				print '<a target=\"_blank\" href=\"%s_fc.pdf\" title=\"\">Get plot in pdf format</a>' % in_gene
 				
 		else:
+			print head
 			print "Please provide a gene!"
 			sys.exit(2)
 	
