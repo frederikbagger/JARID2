@@ -56,7 +56,7 @@ def import_sample_data(_file,sep='\t',verbose=False, line_to_skip=0):
 #
 
 
-def beeswarm_adv(data, names,out='beeswarm.pdf',title='',plot_median=False, use_mean=False, use_log=False):
+def beeswarm_adv(data, names,out='beeswarm.pdf', celltypes_to_use=None, title='',plot_median=False, use_mean=False, use_log=False):
 	"""docstring for beeswarm
 	plots a beeswram plot.
 	data is an array or values
@@ -154,7 +154,7 @@ def beeswarm_adv(data, names,out='beeswarm.pdf',title='',plot_median=False, use_
 	c=numpy.array(a[3]) #r-colors
 	
 	for i,j in enumerate(x): 
-		pylab.plot(x[i],numpy.exp2(y[i]),'o',color=c[i][0:-2],alpha=.7) # R adds FF at the end of the color string, which is bad.#But I do not use R-colors, so [0:-2] is gone
+		pylab.plot(x[i],numpy.exp2(y[i]),'o',color=c[i][0:-2],alpha=.7) # R adds FF at the end of the color string, which is bad.#But I do not use R-colors,
 		
 	pylab.title(in_gene)
 
@@ -301,7 +301,38 @@ def find_probes(gene,organism):
 	pass
 	
 	
+def make_raw_outputFile(data, probe_names, sample_names, adv=False, use_log=False, celltypes_to_use=None, filename='rawData.txt'):
+	'''docstring for make_raw_outputFile
+		prints the data to a file. If the advancedmode is on, then only samples/celltypes given, is printed, by reducing the input data.
+		input: data, probe_names and sample names must be provided with same reduced index syntax, so that only probes wanted in file is given, an in constitent index order.
+	'''
 	
+	outfile=open(filename, 'w')
+	
+	if adv:
+		temp_index=0
+		reduced_samplenames=sample_names
+		for i in sample_names:
+			if not i in celltypes_to_use:
+				data = numpy.delete(data, temp_index, 1)
+				reduced_samplenames = numpy.delete(reduced_samplenames, temp_index, 0)
+			else:
+				temp_index += 1
+		
+		sample_names=reduced_samplenames
+
+	
+	outfile.write(',')
+	outfile.write(', '.join(sample_names))
+	outfile.write('\n')
+	for index,i in enumerate(probe_names):
+		outfile.write(i)
+		outfile.write(', ')
+		for y in data[index]:
+			outfile.write('%s,'%(y))
+		outfile.write('\n')
+
+
 #################################################### End of functions ########################################
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Plots gene expression accross the hematopoietic system.')
@@ -372,6 +403,8 @@ if __name__ == "__main__":
 		except:
 			print "When using advanced mode each celltype must be given as argument"
 			sys.exit(42)
+	else:
+		celltypes=[]
 	
 	
 						# CONFIG FILES #
@@ -446,7 +479,7 @@ if __name__ == "__main__":
 	
 	if probes_names == None:
 		print head
-		print '%s could not be found on array. Maybe you are using an ambigous gene name. If the gene is in database you might find an alias to your gene name at <a href="http://www.genecards.org/">Genecards</a>. <br><br> To get more details about genes in our database see our <a href="http://servers.binf.ku.dk/shs/help.php">help page</a>. <br><br> <a href="http://servers.binf.ku.dk/shs/">Go back</a>'%(in_gene)
+		print '%s could not be found on array. Maybe you are using an ambiguous gene name. If the gene is in database you might find an alias to your gene name at <a href="http://www.genecards.org/">Genecards</a>. <br><br> To get more details about genes in our database see our <a href="http://servers.binf.ku.dk/shs/help.php">help page</a>. <br><br> <a href="http://servers.binf.ku.dk/shs/">Go back</a>'%(in_gene)
 		sys.exit(2)
 	
 	probes_to_use=[]
@@ -457,12 +490,11 @@ if __name__ == "__main__":
 			pass
 	
 	if in_gene2 != None:
-		
 		probes_names2 = find_probes(in_gene2, organism)
 		
 		if probes_names2 == None:
 			print head
-			print '%s could not be found on array. Maybe you are using an ambigous gene name. If the gene is in database you might find an alias to your gene name at <a href="http://www.genecards.org/">Genecards</a>. <br><br> To get more details about genes in our database see our <a href="http://servers.binf.ku.dk/shs/help.php">help page</a>.<br><br> <a href="http://servers.binf.ku.dk/shs/">Go back</a>'%(in_gene2)
+			print '%s could not be found on array. Maybe you are using an ambiguous gene name. If the gene is in database you might find an alias to your gene name at <a href="http://www.genecards.org/">Genecards</a>. <br><br> To get more details about genes in our database see our <a href="http://servers.binf.ku.dk/shs/help.php">help page</a>.<br><br> <a href="http://servers.binf.ku.dk/shs/">Go back</a>'%(in_gene2)
 			sys.exit(2)
 			
 		probes_to_use2=[]
@@ -473,39 +505,45 @@ if __name__ == "__main__":
 				pass
 		
 #########################################################
-	
+#make raw datafile to user - as a complement
+	if in_gene2==None:
+		make_raw_outputFile(all_data['data'][probes_to_use,:], probe_names=all_data['rownames'][probes_to_use], sample_names=all_data['colnames'], adv=adv_mode, use_log = log2gene1, celltypes_to_use=celltypes, filename=in_gene+'_rawData.txt')
+	else:
+		make_raw_outputFile(all_data['data'][probes_to_use,:], probe_names=all_data['rownames'][probes_to_use], sample_names=all_data['colnames'], adv=adv_mode, use_log = log2gene1, celltypes_to_use=celltypes, filename=in_gene+'_rawData.txt')
+		make_raw_outputFile(all_data['data'][probes_to_use2,:], probe_names=all_data['rownames'][probes_to_use2], sample_names=all_data['colnames'], adv=adv_mode, use_log = log2gene2, celltypes_to_use=celltypes, filename=in_gene2+'_rawData.txt')
+		
+
+#########################################################	
 	
 	if in_gene2 == None : # just plot the data
 #		print probes_to_use
 		data=[]
 		if len(probes_to_use) == 0:
 			print head
-			print '%s could not be found on array. Maybe you are using an ambigous gene name. If the gene is in database you might find an alias to your gene name at <a href="http://www.genecards.org/">Genecards</a>. <br><br> To get more details about genes in our database see our <a href="http://servers.binf.ku.dk/shs/help.php">help page</a>.<br><br> <a href="http://servers.binf.ku.dk/shs/">Go back</a>'%(in_gene)
+			print '%s could not be found on array. Maybe you are using an ambiguous gene name. If the gene is in database you might find an alias to your gene name at <a href="http://www.genecards.org/">Genecards</a>. <br><br> To get more details about genes in our database see our <a href="http://servers.binf.ku.dk/shs/help.php">help page</a>.<br><br> <a href="http://servers.binf.ku.dk/shs/">Go back</a>'%(in_gene)
 			sys.exit(999)
 
-		a=all_data['data'][probes_to_use,:]
+		a = all_data['data'][probes_to_use,:]
 		maxes = numpy.argmax(numpy.abs(a), axis=0)
 		for index,i in enumerate(maxes):
-			d=all_data['data'][probes_to_use,index][i]
+			d = all_data['data'][probes_to_use,index][i]
 			data.append(d)
 			
-		
 		if organism == 'mouse':
-			genename=in_gene.capitalize()
+			genename = in_gene.capitalize()
 		else: #it is human
-			genename= in_gene.upper()
+			genename = in_gene.upper()
 		
 		if fold_change:                                    
 			if adv_mode:
-				classes2use = beeswarm_adv(numpy.array(data),all_data['colnames'], title = genename, out= [in_gene+'_fc.pdf', in_gene+'_fc.png'], plot_median=True, use_log=log2gene1) 
+				classes2use = beeswarm_adv(numpy.array(data),all_data['colnames'], celltypes_to_use=celltypes, title = genename, out= [in_gene+'_fc.pdf', in_gene+'_fc.png'], plot_median=True, use_log=log2gene1) 
 			else:
 				classes2use = beeswarm(numpy.array(data),all_data['colnames'], title = genename, out= [in_gene+'_fc.pdf', in_gene+'_fc.png'], plot_median=True, use_log=log2gene1) 
 		else:                                              
 			if adv_mode:
-				classes2use = beeswarm_adv(numpy.array(data),all_data['colnames'], title = genename, out= [in_gene+'.pdf', in_gene+'.png'], plot_median=True, use_log=log2gene1)
+				classes2use = beeswarm_adv(numpy.array(data),all_data['colnames'], celltypes_to_use=celltypes, title = genename, out= [in_gene+'.pdf', in_gene+'.png'], plot_median=True, use_log=log2gene1)
 			else:
 				classes2use = beeswarm(numpy.array(data),all_data['colnames'], title = genename, out= [in_gene+'.pdf', in_gene+'.png'], plot_median=True, use_log=log2gene1)
-                                                           
 
 	
 	else:	   # here we plot the correlation
@@ -616,7 +654,7 @@ if __name__ == "__main__":
 			plt.ylim(ymax=plt.ylim()[1]*1.1) #make room for the legend
 		else:
 			
-			plt.ylabel('%s'%in_gene)
+			plt.ylabel('%s'%in_gene2)
 			plt.ylim(ymax=plt.ylim()[1]*1.05) #make room for the legend
 		
 		
@@ -648,7 +686,7 @@ if __name__ == "__main__":
 ##################################################################################	
 #MAKE HTML text
 
-	d = {'cd14+ monocytes':'CD14 positive Monocytes','HSC_BM':'Hematopoietic stem cells from bone marrow','early HPC_BM':'Hematopoietic progenitor cells from bone marrow','CMP':'Common myeloid progenitor cell','GMP':'Granulocyte monocyte progenitors','MEP':'Megakaryocyte-erythroid progenitor cell','PM_BM':'Promyelocyte from bone marrow','MY_BM':'Myelocyte from bone marrow','PMN_BM':'Polymorphonuclear cells from bone marrow','PMN_PB':'Polymorphonuclear cells from peripheral blood','AMLI_ETO':'AML with t(8;21)','APL':'AML with t(15;17)','AML with inv(16)/t(16;16)':'AML with inv(16)/t(16;16)','AML with t(11q23)/MLL':'AML with t(11q23)/MLL','LT-HSC':'Long term Hematopoietic stem cell','ST-HSC':'Short term Hematopoietic stem cell','LMPP':'Lymphoid-primed multipotential progenitors','CLP':'Common lymphoid progenitor cells','ETP':'Early T-cell progenitor','ProB':'Pro-B cell','PreB':'Pre-B cell','IgM+SP':'Immunoglobulin M positive side population cells','CD4':'CD4 cells','NKmature':'Mature natural killer cells','GMP':'Granulocyte monocyte progenitors','MkE':'Megakaryocyte erythroid precursors','MkP':'Megakaryocyte precursor','PreCFUE':'Pre-colony-forming unit erythroid cells','CFUE':'Colony-forming unit erythroid cells','ProE':'Erythroid progenitor cells'}
+	abbreviations = {'cd14+ monocytes':'CD14 positive Monocytes','HSC_BM':'Hematopoietic stem cells from bone marrow','early HPC_BM':'Hematopoietic progenitor cells from bone marrow','CMP':'Common myeloid progenitor cell','GMP':'Granulocyte monocyte progenitors','MEP':'Megakaryocyte-erythroid progenitor cell','PM_BM':'Promyelocyte from bone marrow','MY_BM':'Myelocyte from bone marrow','PMN_BM':'Polymorphonuclear cells from bone marrow','PMN_PB':'Polymorphonuclear cells from peripheral blood','AMLI_ETO':'AML with t(8;21)','APL':'AML with t(15;17)','AML with inv(16)/t(16;16)':'AML with inv(16)/t(16;16)','AML with t(11q23)/MLL':'AML with t(11q23)/MLL','LT-HSC':'Long term Hematopoietic stem cell','ST-HSC':'Short term Hematopoietic stem cell','LMPP':'Lymphoid-primed multipotential progenitors','CLP':'Common lymphoid progenitor cells','ETP':'Early T-cell progenitor','ProB':'Pro-B cell','PreB':'Pre-B cell','IgM+SP':'Immunoglobulin M positive side population cells','CD4':'CD4 cells','NKmature':'Mature natural killer cells','GMP':'Granulocyte monocyte progenitors','MkE':'Megakaryocyte erythroid precursors','MkP':'Megakaryocyte precursor','PreCFUE':'Pre-colony-forming unit erythroid cells','CFUE':'Colony-forming unit erythroid cells','ProE':'Erythroid progenitor cells'}
 
 
 	singletxt='''	<b>Single gene lookup</b><br>
@@ -714,9 +752,9 @@ if __name__ == "__main__":
 					print single_log				
 
 			#print abbreviation table
-			print '<br>Abrieviations:<br> <table border="0">'
+			print '<br><br><br>Abrieviations:<br> <table border="0">'
 			for classe in classes2use:
-				print '<tr> <td>', classe, '</td> <td>', d[classe], '</td> </tr>'
+				print '<tr> <td>', classe, '</td> <td>', abbreviations[classe], '</td> </tr>'
 			print '</table>'
 
 				
