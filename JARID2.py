@@ -130,8 +130,12 @@ def beeswarm_adv(data, names,out='beeswarm.pdf', celltypes_to_use=None, title=''
 	
 	if use_log:
 		pylab.yscale('log', basey=2)
-		pylab.ylabel('Expression (log2)')
-		
+		pylab.ylabel('Expression (arbitrary units) (log2)')
+	elif fold_change:
+		pylab.ylabel('Fold change relative to nearest normal counterpart')
+	else:
+		pylab.ylabel('Expression (arbitrary units)')		
+
 	if plot_median:
 		for	 i in range(len(classes2use_order)):
 			z= numpy.array(classes2use[classes2use_order[i]]) 
@@ -215,7 +219,11 @@ def beeswarm(data, names,out='beeswarm.pdf',title='', plot_median=False, use_mea
 	
 	if use_log:
 		pylab.yscale('log', basey=2)
-		pylab.ylabel('Expression (log2)')
+		pylab.ylabel('Expression (arbitrary units) (log2)')
+	elif fold_change:
+		pylab.ylabel('Expression relative to normal')
+	else:
+		pylab.ylabel('Expression (arbitrary units)')
 	
 	for i,j in enumerate(x): 
 		pylab.plot(x[i],numpy.exp2(y[i]),'o',color=c[i][0:-2],alpha=.7) # R adds FF at the end of the color string, which is bad.
@@ -309,6 +317,10 @@ def make_raw_outputFile(data, probe_names, sample_names, adv=False, use_log=Fals
 	
 	outfile=open(filename, 'w')
 	
+	if not use_log:
+		data = numpy.exp2(data)
+	
+	
 	if adv:
 		temp_index=0
 		reduced_samplenames=sample_names
@@ -379,6 +391,7 @@ if __name__ == "__main__":
 	parser.add_argument("-PreCFUE","--PreCFUE", dest='celltypes', action="append_const", const="PreCFUE", default=argparse.SUPPRESS, help="Pre-colony-forming") 
 	parser.add_argument("-CFUE","--CFUE", dest='celltypes', action="append_const", const="CFUE", default=argparse.SUPPRESS, help="Colony-forming") 
 	parser.add_argument("-ProE","--ProE", dest='celltypes', action="append_const", const="ProE", default=argparse.SUPPRESS, help="Erythroid")
+	parser.add_argument("-preGM","--preGM", dest='celltypes', action="append_const", const="preGM", default=argparse.SUPPRESS, help="pre GMP")
 	
 
 	args = parser.parse_args()
@@ -417,8 +430,8 @@ if __name__ == "__main__":
 	path_to_use = config[0][1]	#first line is the path
 	WEB_opt = int(config[1][1]) #second line is the web option.
 ##################################################################################	
-	colors=['#FAAFBEFF','#808000FF','#FFF8C6FF','#8E35EFFF','#A52A2AFF', '#FFFFFFFF','#FF0000FF', '#008000FF', '#C0C0C0FF', '#0000FFFF', '#FFFF00FF', '#FF00FFFF', '#8AFB17FF','#FFA500FF', '#000000FF', '#00FFFFFF']
-	py_colors=['#FAAFBE','#808000','#FFF8C6','#8E35EF','#A52A2A', '#FFFFFF','#FF0000', '#008000', '#C0C0C0', '#0000FF', '#FFFF00', '#FF00FF', '#8AFB17','#FFA500', '#000000', '#00FFFF']
+	colors=['#0066FFFF','#FAAFBEFF','#808000FF','#FFF8C6FF','#8E35EFFF','#A52A2AFF', '#FFFFFFFF','#FF0000FF', '#008000FF', '#C0C0C0FF', '#0000FFFF', '#FFFF00FF', '#FF00FFFF', '#8AFB17FF','#FFA500FF', '#000000FF', '#00FFFFFF']
+	py_colors=['#0066FF','#FAAFBE','#808000','#FFF8C6','#8E35EF','#A52A2A','#FFFFFF','#FF0000','#008000','#C0C0C0','#0000FF','#FFFF00','#FF00FF','#8AFB17','#FFA500','#000000','#00FFFF']
 
 ######################################################
 	
@@ -448,7 +461,7 @@ if __name__ == "__main__":
 	head='''<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 		<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
 		<head>
-		<title> Servers.binf.ku.dk | SHS </title>
+		<title> Servers.binf.ku.dk | HemaExplorer </title>
 		<meta name="language" content="en" />
 		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 		<style type="text/css">
@@ -507,10 +520,10 @@ if __name__ == "__main__":
 #########################################################
 #make raw datafile to user - as a complement
 	if in_gene2==None:
-		make_raw_outputFile(all_data['data'][probes_to_use,:], probe_names=all_data['rownames'][probes_to_use], sample_names=all_data['colnames'], adv=adv_mode, use_log = log2gene1, celltypes_to_use=celltypes, filename=in_gene+'_rawData.txt')
+		make_raw_outputFile(all_data['data'][probes_to_use,:], probe_names=all_data['rownames'][probes_to_use], sample_names=all_data['colnames'], adv=adv_mode, use_log = log2gene1, celltypes_to_use=celltypes, filename=in_gene+'_rawData.csv')
 	else:
-		make_raw_outputFile(all_data['data'][probes_to_use,:], probe_names=all_data['rownames'][probes_to_use], sample_names=all_data['colnames'], adv=adv_mode, use_log = log2gene1, celltypes_to_use=celltypes, filename=in_gene+'_rawData.txt')
-		make_raw_outputFile(all_data['data'][probes_to_use2,:], probe_names=all_data['rownames'][probes_to_use2], sample_names=all_data['colnames'], adv=adv_mode, use_log = log2gene2, celltypes_to_use=celltypes, filename=in_gene2+'_rawData.txt')
+		make_raw_outputFile(all_data['data'][probes_to_use,:], probe_names=all_data['rownames'][probes_to_use], sample_names=all_data['colnames'], adv=adv_mode, use_log = log2gene1, celltypes_to_use=celltypes, filename=in_gene+'_rawData.csv')
+		make_raw_outputFile(all_data['data'][probes_to_use2,:], probe_names=all_data['rownames'][probes_to_use2], sample_names=all_data['colnames'], adv=adv_mode, use_log = log2gene2, celltypes_to_use=celltypes, filename=in_gene2+'_rawData.csv')
 		
 
 #########################################################	
@@ -607,7 +620,7 @@ if __name__ == "__main__":
 			else:
 				classes2use[classe].append(index)
 
-
+		#reduce dataset
 		if adv_mode:
 			reduced_set={}
 			reduced_order=[]
@@ -629,7 +642,8 @@ if __name__ == "__main__":
 		lin_fit = numpy.polyfit(numpy.array(fc),numpy.array(fc2),1) # this returns the coef of the polynomial fit
 		corr_coef = numpy.corrcoef(numpy.array(fc),numpy.array(fc2))[0][1] # this is R
 		line_x = numpy.linspace(numpy.array(fc).min(),numpy.array(fc).max()) # this is to have some points to actually draw the line. 
-
+		
+		
 		plots=[]
 		for i,classe in enumerate(classes2use):
 			a=plt.plot(numpy.array(fc)[classes2use[classe]],numpy.array(fc2)[classes2use[classe]],'o',alpha=.5, color=py_colors[i], marker=markers[i], label=classe)
@@ -686,14 +700,14 @@ if __name__ == "__main__":
 ##################################################################################	
 #MAKE HTML text
 
-	abbreviations = {'cd14+ monocytes':'CD14 positive Monocytes','HSC_BM':'Hematopoietic stem cells from bone marrow','early HPC_BM':'Hematopoietic progenitor cells from bone marrow','CMP':'Common myeloid progenitor cell','GMP':'Granulocyte monocyte progenitors','MEP':'Megakaryocyte-erythroid progenitor cell','PM_BM':'Promyelocyte from bone marrow','MY_BM':'Myelocyte from bone marrow','PMN_BM':'Polymorphonuclear cells from bone marrow','PMN_PB':'Polymorphonuclear cells from peripheral blood','AMLI_ETO':'AML with t(8;21)','APL':'AML with t(15;17)','AML with inv(16)/t(16;16)':'AML with inv(16)/t(16;16)','AML with t(11q23)/MLL':'AML with t(11q23)/MLL','LT-HSC':'Long term Hematopoietic stem cell','ST-HSC':'Short term Hematopoietic stem cell','LMPP':'Lymphoid-primed multipotential progenitors','CLP':'Common lymphoid progenitor cells','ETP':'Early T-cell progenitor','ProB':'Pro-B cell','PreB':'Pre-B cell','IgM+SP':'Immunoglobulin M positive side population cells','CD4':'CD4 cells','NKmature':'Mature natural killer cells','GMP':'Granulocyte monocyte progenitors','MkE':'Megakaryocyte erythroid precursors','MkP':'Megakaryocyte precursor','PreCFUE':'Pre-colony-forming unit erythroid cells','CFUE':'Colony-forming unit erythroid cells','ProE':'Erythroid progenitor cells'}
+	abbreviations = {'cd14+ monocytes':'CD14 positive Monocytes','HSC_BM':'Hematopoietic stem cells from bone marrow','early HPC_BM':'Hematopoietic progenitor cells from bone marrow','CMP':'Common myeloid progenitor cell','GMP':'Granulocyte monocyte progenitors','MEP':'Megakaryocyte-erythroid progenitor cell','PM_BM':'Promyelocyte from bone marrow','MY_BM':'Myelocyte from bone marrow','PMN_BM':'Polymorphonuclear cells from bone marrow','PMN_PB':'Polymorphonuclear cells from peripheral blood','AMLI_ETO':'AML with t(8;21)','APL':'AML with t(15;17)','AML with inv(16)/t(16;16)':'AML with inv(16)/t(16;16)','AML with t(11q23)/MLL':'AML with t(11q23)/MLL','LT-HSC':'Long term Hematopoietic stem cell','ST-HSC':'Short term Hematopoietic stem cell','LMPP':'Lymphoid-primed multipotential progenitors','CLP':'Common lymphoid progenitor cells','ETP':'Early T-cell progenitor','ProB':'Pro-B cell','PreB':'Pre-B cell','IgM+SP':'Immunoglobulin M positive side population cells','CD4':'CD4 cells','NKmature':'Mature natural killer cells','GMP':'Granulocyte monocyte progenitors','MkE':'Megakaryocyte erythroid precursors','MkP':'Megakaryocyte precursor','PreCFUE':'Pre-colony-forming unit erythroid cells','CFUE':'Colony-forming unit erythroid cells','ProE':'Erythroid progenitor cells', 'preGM':'pre-granulocyte monocyte'}
 
 
 	singletxt='''	<b>Single gene lookup</b><br>
 		Each dot in the plot corresponds the expression of '''+in_gene+''' in a microarray. Horizontal lines represent the median expression for each class of cells. '''
 	
 	singletxt_fc='''	<b>Single gene lookup</b><br>
-	Each dot in the plot corresponds the foldchange of '''+in_gene+''' in a microarray. Horizontal lines represent the median expression for each class of cells. '''
+	Each dot in the plot corresponds the fold change of '''+in_gene+''' relative to the nearest normal counterpart. Horizontal lines represent the median fold change for each class of cells. '''
 
 	if in_gene2 is not None:
 		cortxt='''<b>Correlation</b><br>
@@ -707,8 +721,8 @@ if __name__ == "__main__":
 
 		
 	cor_loglog=''' x- and y-axis are in log2 scale.'''
-	cor_lg1='''x-axis is in log2 scale.'''
-	cor_lg2='''y-axis is in log2 scale.'''
+	cor_lg1='''y-axis is in log2 scale.'''
+	cor_lg2='''x-axis is in log2 scale.'''
 	single_log='''Expression is given on y-axis on a log2 scale.'''
 	
 	
@@ -752,9 +766,14 @@ if __name__ == "__main__":
 					print single_log				
 
 			#print abbreviation table
+			prev="NULL"
 			print '<br><br><br>Abrieviations:<br> <table border="0">'
-			for classe in classes2use:
-				print '<tr> <td>', classe, '</td> <td>', abbreviations[classe], '</td> </tr>'
+			for classe in all_data['colnames']:
+					if classe in classes2use:
+						if classe != prev:
+							print '<tr> <td>', classe, '</td> <td>', abbreviations[classe], '</td> </tr>'
+					prev=classe
+					
 			print '</table>'
 
 				
@@ -762,6 +781,14 @@ if __name__ == "__main__":
 				print '<br><a target=\"_blank\" href=\"%s.pdf\" title=\"\">Get plot in pdf format</a>' % in_gene		
 			else:
 				print '<a target=\"_blank\" href=\"%s_fc.pdf\" title=\"\">Get plot in pdf format</a>' % in_gene
+			
+			
+			if in_gene2==None:
+				print '<br><a target=\"_blank\" href=\"%s_rawData.csv\" title=\"\">Get raw data with all probes for %s</a>. (Data is log2 transformed if \"Axis in log2\" was selected)' % (in_gene, in_gene)		
+			else:                                                                                                                                                                 
+				print '<br><a target=\"_blank\" href=\"%s_rawData.csv\" title=\"\">Get raw data with all probes for %s</a>. (Data is log2 transformed if \"Axes in log2\" was selected)' % (in_gene, in_gene)		
+				print '<br><a target=\"_blank\" href=\"%s_rawData.csv\" title=\"\">Get raw data with all probes for %s</a>. (Data is log2 transformed if \"Axes in log2\" was selected)' % (in_gene2, in_gene2)		
+	
 				
 		else:
 			print head
